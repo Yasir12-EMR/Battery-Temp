@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battery Logger</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .tab-buttons button { margin: 0 5px; padding: 10px 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    .warning-yellow { background-color: #fff59d; }
+    .warning-amber { background-color: #ffcc80; }
+    .warning-red { background-color: #ef9a9a; }
+  
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f9f9f9;
+    color: #333;
+  }
+  h2, h3 {
+    color: #444;
+  }
+  input, select, button {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    margin: 8px auto;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  table {
+    font-size: 14px;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 20px;
+  }
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  .tab-buttons {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .tab-buttons button {
+    background: #eee;
+    border: 1px solid #ccc;
+    margin: 0 5px;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .tab-buttons button:hover {
+    background: #ddd;
+  }
+</style>
+
+  <style>
+    input, select, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .tab-content {
+      padding-bottom: 20px;
+    }
+    table {
+      overflow-x: auto;
+      display: block;
+      width: 100%;
+    }
+    th, td {
+      font-size: 14px;
+    }
+  
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f9f9f9;
+    color: #333;
+  }
+  h2, h3 {
+    color: #444;
+  }
+  input, select, button {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    margin: 8px auto;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  table {
+    font-size: 14px;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 20px;
+  }
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  .tab-buttons {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .tab-buttons button {
+    background: #eee;
+    border: 1px solid #ccc;
+    margin: 0 5px;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .tab-buttons button:hover {
+    background: #ddd;
+  }
+</style>
+
+
+</head>
+<body>
+
+<h2>Battery Logger</h2>
+
+
+
+
+
+
+
+
+<h4>Select Pod:</h4>
+<select id="podSelector" onchange="showTab(this.selectedIndex)">
+  <option>Pod 1</option>
+  <option>Pod 2</option>
+  <option>Pod 3</option>
+</select>
+<br><br>
+<button onclick="exportAll()">Export to Excel</button><br><br>
+<div id="tabs"></div>
+
+<script>
+const dischargers = ["HV cycler", "Discharger 1", "Discharger 2", "Discharger 3", "Discharger 4", "Discharger 5", "Discharger 6", "Discharger 7", "Discharger 8"];
+const technicians = ["Yasir", "Charles", "Ninvier", "Mohammed", "Indy"];
+const logs = [[], [], []];
+
+function createTab(index) {
+  const tab = document.createElement("div");
+  tab.className = "tab-content";
+  if (index === 0) tab.classList.add("active");
+
+  tab.innerHTML = `
+    <h3>Pod ${index + 1}</h3>
+    <select class="discharger">${dischargers.map(d => `<option>${d}</option>`).join("")}</select>
+    <select class="technician">${technicians.map(t => `<option>${t}</option>`).join("")}</select>
+    <input placeholder="Voltage (V)" class="voltage" type="number" step="0.1">
+    <input placeholder="Amps (A)" class="amps" type="number" step="0.1">
+    <input placeholder="Temperature (°C)" class="temp" type="number" step="0.1">
+    <input placeholder="Modules" class="modules" type="number">
+    <input placeholder="Comment (optional)" class="comment">
+    <button onclick="logEntry(${index})">Log</button>
+<h4>Filter by Discharger:</h4>
+<select id="globalDischargerFilter" onchange="filterDischargers()">
+  <option value="all">Show All</option>
+  <option>HV cycler</option>
+  <option>Discharger 1</option>
+  <option>Discharger 2</option>
+  <option>Discharger 3</option>
+  <option>Discharger 4</option>
+  <option>Discharger 5</option>
+  <option>Discharger 6</option>
+  <option>Discharger 7</option>
+  <option>Discharger 8</option>
+</select>
+<br><br>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Time</th><th>Discharger</th><th>Technician</th><th>Voltage</th><th>Amps</th>
+          <th>Temp</th><th>Modules</th><th>Warning</th><th>Action</th><th>Comment</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  `;
+  return tab;
+}
+
+function showTab(i) {
+  document.querySelectorAll(".tab-content").forEach((tab, idx) => {
+    tab.classList.toggle("active", i === idx);
+  });
+}
+
+function logEntry(index) {
+  const tab = document.querySelectorAll(".tab-content")[index];
+  const discharger = tab.querySelector(".discharger").value;
+  const technician = tab.querySelector(".technician").value;
+  const voltage = parseFloat(tab.querySelector(".voltage").value);
+  const amps = parseFloat(tab.querySelector(".amps").value);
+  const temp = parseFloat(tab.querySelector(".temp").value);
+  const modules = tab.querySelector(".modules").value;
+  const comment = tab.querySelector(".comment").value;
+  const now = new Date();
+  const date = now.toLocaleDateString("en-GB");
+  const time = now.toLocaleTimeString("en-GB");
+
+  let warning = "", action = "";
+  if (voltage >= 5) {
+    if (temp >= 30 && temp < 35) { warning = "Getting hot"; action = "Check every 10 mins"; }
+    else if (temp >= 35 && temp < 40) { warning = "Hot"; action = "Prepare to isolate"; }
+    else if (temp >= 40) { warning = "Dangerously Hot"; action = "Isolate"; }
+  } else {
+    if (temp >= 40 && temp < 45) { warning = "Getting hot"; action = "Check every 10 mins"; }
+    else if (temp >= 45 && temp < 50) { warning = "Hot"; action = "Prepare to isolate"; }
+    else if (temp >= 50) { warning = "Dangerously Hot"; action = "Isolate"; }
+  }
+
+  const row = document.createElement("tr");
+  if (warning === "Getting hot") row.className = "warning-yellow";
+  if (warning === "Hot") row.className = "warning-amber";
+  if (warning === "Dangerously Hot") row.className = "warning-red";
+
+  row.innerHTML = `<td>${date}</td><td>${time}</td><td>${discharger}</td><td>${technician}</td>
+                   <td>${voltage}</td><td>${amps}</td><td>${temp}</td><td>${modules}</td>
+                   <td>${warning}</td><td>${action}</td><td>${comment}</td>`;
+  tab.querySelector("tbody").appendChild(row);
+  logs[index].push({ date, time, discharger, technician, voltage, amps, temp, modules, warning, action, comment });
+}
+
+
+
+
+
+document.getElementById("tabs").append(...[0, 1, 2].map(createTab));
+
+function filterDischargers() {
+  const selected = document.getElementById("globalDischargerFilter").value;
+  document.querySelectorAll(".tab-content tbody").forEach(tbody => {
+    [...tbody.rows].forEach(row => {
+      const discharger = row.cells[2]?.textContent || "";
+      row.style.display = (selected === "all" || discharger === selected) ? "" : "none";
+    });
+  });
+}
+
+
+
+
+
+function filterDischargers() {
+  const selected = document.getElementById("globalDischargerFilter").value;
+  document.querySelectorAll(".tab-content tbody").forEach(tbody => {
+    [...tbody.rows].forEach(row => {
+      const discharger = row.cells[2]?.textContent || "";
+      row.style.display = (selected === "all" || discharger === selected) ? "" : "none";
+    });
+  });
+}
+
+
+function exportAll() {
+  if (typeof XLSX === 'undefined') {
+    alert("Export failed: XLSX library not loaded.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  logs.forEach((podLog, i) => {
+    const data = [["Date", "Time", "Discharger", "Technician", "Voltage", "Amps", "Temp", "Modules", "Warning", "Action", "Comment"]];
+    podLog.forEach(e => {
+      data.push([e.date, e.time, e.discharger, e.technician, e.voltage, e.amps, e.temp, e.modules, e.warning, e.action, e.comment]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, `Pod ${i + 1}`);
+  });
+  XLSX.writeFile(wb, "BatteryLogger.xlsx");
+}
+
+</script>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mini.min.js">
+function filterDischargers() {
+  const selected = document.getElementById("globalDischargerFilter").value;
+  document.querySelectorAll(".tab-content tbody").forEach(tbody => {
+    [...tbody.rows].forEach(row => {
+      const discharger = row.cells[2]?.textContent || "";
+      row.style.display = (selected === "all" || discharger === selected) ? "" : "none";
+    });
+  });
+}
+
+
+function filterDischargers() {
+  const selected = document.getElementById("globalDischargerFilter").value;
+  document.querySelectorAll(".tab-content tbody").forEach(tbody => {
+    [...tbody.rows].forEach(row => {
+      const discharger = row.cells[2]?.textContent || "";
+      row.style.display = (selected === "all" || discharger === selected) ? "" : "none";
+    });
+  });
+}
+
+
+function exportAll() {
+  if (typeof XLSX === 'undefined') {
+    alert("Export failed: XLSX library not loaded.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  logs.forEach((podLog, i) => {
+    const data = [["Date", "Time", "Discharger", "Technician", "Voltage", "Amps", "Temp", "Modules", "Warning", "Action", "Comment"]];
+    podLog.forEach(e => {
+      data.push([e.date, e.time, e.discharger, e.technician, e.voltage, e.amps, e.temp, e.modules, e.warning, e.action, e.comment]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, `Pod ${i + 1}`);
+  });
+  XLSX.writeFile(wb, "BatteryLogger.xlsx");
+}
+
+</script>
+<br><br>
+
+
+
+</body>
+</html>
